@@ -14,22 +14,33 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: qmkfm/qmk_cli:latest
 
     steps:
-      - name: Checkout (with submodules)
+      - name: Checkout (full, with submodules)
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          fetch-depth: 0              # fix git describe warning
+          submodules: recursive       # init all submodules
 
-      - name: Build firmware
+      - name: Install toolchains
         run: |
-          qmk compile -kb keychron/q3_he/iso_encoder -km my_led_fn
-          ls -la ./.build
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            gcc-arm-none-eabi binutils-arm-none-eabi \
+            dfu-util dfu-programmer
+
+      - name: Build firmware (GNU make)
+        run: |
+          make -j1 keychron/q3_he/iso_encoder:my_led_fn
+          ls -la ./.build || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: q3_he_my_led_fn
-          path: ./.build/**/*.bin
+          path: |
+            ./.build/**/*.bin
+            ./.build/**/*.hex
+            ./.build/**/*.dfu
+            ./.build/**/*.uf2
