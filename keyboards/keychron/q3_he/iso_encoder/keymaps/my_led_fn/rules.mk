@@ -1,2 +1,3 @@
 VIA_ENABLE = yes
 RGB_MATRIX_ENABLE = yes
+DFU_SUFFIX_ARGS = -v 0x0483 -p 0xdf11
