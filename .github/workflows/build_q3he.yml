@@ -22,22 +22,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: qmkfm/qmk_cli:latest   # QMK CLI & Toolchains sind hier schon drin
+      image: qmkfm/qmk_cli:latest
 
     steps:
       - name: Checkout (full, with submodules)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0            # für git describe etc.
-          submodules: recursive     # alle QMK-Submodule holen
-
-      # Wir bauen bewusst mit GNU make (stabiler für Keychron-Fork im Container)
-      - name: Build firmware (GNU make with explicit vars)
-        env:
-          KEYBOARD: keychron/q3_he/iso_encoder
-          KEYMAP:   my_led_fn
+          fetch-depth: 0
+          submodules: recursive
+        
+      - name: Build firmware (GNU make, only Q3 HE my_led_fn)
         run: |
-          make -j1 KEYBOARD=$KEYBOARD KEYMAP=$KEYMAP
+          make -j1 keychron/q3_he/iso_encoder:my_led_fn
           ls -la ./.build || true
 
       - name: Upload artifact
