@@ -19,10 +19,10 @@ jobs:
       - name: Checkout (full, with submodules)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0              # fix git describe warning
-          submodules: recursive       # init all submodules
+          fetch-depth: 0
+          submodules: recursive
 
-      - name: Install toolchains
+      - name: Install ARM toolchain and DFU utils
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -30,9 +30,12 @@ jobs:
             gcc-arm-none-eabi binutils-arm-none-eabi \
             dfu-util dfu-programmer
 
-      - name: Build firmware (GNU make)
+      - name: Build firmware (GNU make with explicit vars)
+        env:
+          KEYBOARD: keychron/q3_he/iso_encoder
+          KEYMAP:   my_led_fn
         run: |
-          make -j1 keychron/q3_he/iso_encoder:my_led_fn
+          make -j1 KEYBOARD=$KEYBOARD KEYMAP=$KEYMAP
           ls -la ./.build || true
 
       - name: Upload artifact

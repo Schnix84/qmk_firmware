@@ -17,7 +17,6 @@
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
 
-// ---- 6 Klammer-Keycodes (Windows/DE) ----
 enum custom_keycodes {
     MIC_MUTE_TGL = SAFE_RANGE
 };
@@ -38,7 +37,7 @@ void keyboard_post_init_user(void) {
             if (led == NO_LED) continue;
 
             keypos_t kp = (keypos_t){ .row = row, .col = col };
-            uint16_t kc = keymap_key_to_keycode(WIN_BASE, kp); // Layer 2 (Windows Base)
+            uint16_t kc = keymap_key_to_keycode(WIN_BASE, kp);
 
             switch (kc) {
                 case KC_MINS: led_idx_MINS = led; break;
@@ -53,9 +52,9 @@ void keyboard_post_init_user(void) {
 }
 
 bool rgb_matrix_indicators_user(void) {
-    if (!layer_state_is(WIN_FN)) return false;  // only when Fn layer is active
+    if (!layer_state_is(WIN_FN)) return false;
 
-    // Uncomment to turn everything else off while Fn is held:
+    // turn everything else off while Fn is held:
     rgb_matrix_set_color_all(0, 0, 0);
 
     if (led_idx_MINS != NO_LED) rgb_matrix_set_color(led_idx_MINS, 255, 0, 0);
@@ -127,7 +126,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 #endif // ENCODER_MAP_ENABLE
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // Keychron-Common zuerst
+    // Keychron-Common
     if (!process_record_keychron_common(keycode, record)) {
         return false;
     }
@@ -135,7 +134,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    // (A) Mic mute/unmute: Win+Alt+K (wirkt auf allen Layern)
+    // Mic mute/unmute: Win+Alt+K
     if (keycode == MIC_MUTE_TGL) {
         register_mods(MOD_LGUI | MOD_LALT);
         tap_code(KC_K);
@@ -143,13 +142,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
-    // (B) Klammern nur wenn Fn-Layer (WIN_FN) aktiv ist
+    // Brackets only when Fn layer (WIN_FN) is active
     if (!layer_state_is(WIN_FN)) {
         return true;
     }
 
     // Fn + ß/´/Ü/+ /Ä/# → ( ) [ ] { }
-    // DE-ISO Positions-Keycodes: ß=KC_MINS, ´=KC_EQL, Ü=KC_LBRC, +=KC_RBRC, Ä=KC_QUOT, #=KC_NUHS
+    // DE-ISO position-keycodes: ß=KC_MINS, ´=KC_EQL, Ü=KC_LBRC, +=KC_RBRC, Ä=KC_QUOT, #=KC_NUHS
     switch (keycode) {
         case KC_MINS: tap_code16(S(KC_8));    return false; // ß → (
         case KC_EQL:  tap_code16(S(KC_9));    return false; // ´ → )
