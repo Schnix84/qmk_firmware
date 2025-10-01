@@ -11,25 +11,27 @@ on:
       - 'keyboards/keychron/q3_he/**'
       - '.github/workflows/build_q3he.yml'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: q3he-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: qmkfm/qmk_cli:latest   # QMK CLI & Toolchains sind hier schon drin
 
     steps:
       - name: Checkout (full, with submodules)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          submodules: recursive
+          fetch-depth: 0            # für git describe etc.
+          submodules: recursive     # alle QMK-Submodule holen
 
-      - name: Install ARM toolchain and DFU utils
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            gcc-arm-none-eabi binutils-arm-none-eabi \
-            dfu-util dfu-programmer
-
+      # Wir bauen bewusst mit GNU make (stabiler für Keychron-Fork im Container)
       - name: Build firmware (GNU make with explicit vars)
         env:
           KEYBOARD: keychron/q3_he/iso_encoder

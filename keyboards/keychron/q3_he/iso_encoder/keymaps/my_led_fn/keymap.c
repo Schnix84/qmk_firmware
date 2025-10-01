@@ -29,6 +29,13 @@ static uint8_t led_idx_RBRC = NO_LED; // +
 static uint8_t led_idx_QUOT = NO_LED; // Ä
 static uint8_t led_idx_NUHS = NO_LED; // #
 
+enum layers {
+    MAC_BASE,
+    MAC_FN,
+    WIN_BASE,
+    WIN_FN,
+};
+
 void keyboard_post_init_user(void) {
     // Find LED indices of the six target keys by inspecting Windows base layer (WIN_BASE)
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
@@ -67,14 +74,6 @@ bool rgb_matrix_indicators_user(void) {
     return true;
 }
 #endif
-
-
-enum layers {
-    MAC_BASE,
-    MAC_FN,
-    WIN_BASE,
-    WIN_FN,
-};
 
 #define FN_MAC MO(MAC_FN)
 #define FN_WIN MO(WIN_FN)
