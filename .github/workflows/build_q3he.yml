@@ -1,0 +1,35 @@
+name: Build Q3 HE (my_led_fn)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - hall_effect_playground
+      - master
+      - main
+    paths:
+      - 'keyboards/keychron/q3_he/**'
+      - '.github/workflows/build_q3he.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: qmkfm/qmk_cli:latest
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build firmware
+        run: |
+          qmk compile -kb keychron/q3_he/iso_encoder -km my_led_fn
+          ls -la ./.build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: q3_he_my_led_fn
+          path: ./.build/**/*.bin
