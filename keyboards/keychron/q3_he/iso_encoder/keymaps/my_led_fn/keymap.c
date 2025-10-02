@@ -73,20 +73,19 @@ void keyboard_post_init_user(void) {
     }
 }
 
-/* Overlay indicators: add highlights without clearing the base effect */
-bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-    /* Highlight bracket/pipe keys when any FN layer is held */
+bool rgb_matrix_indicators_user(void) {
+    // FN overlay for brackets/pipe – always paint over the base effect
     if (layer_state_is(MAC_FN) || layer_state_is(WIN_FN)) {
-        if (led_idx_MINS != NO_LED && led_idx_MINS >= led_min && led_idx_MINS < led_max) rgb_matrix_set_color(led_idx_MINS, 255, 0, 0);
-        if (led_idx_EQL  != NO_LED && led_idx_EQL  >= led_min && led_idx_EQL  < led_max) rgb_matrix_set_color(led_idx_EQL,  255, 0, 0);
-        if (led_idx_LBRC != NO_LED && led_idx_LBRC >= led_min && led_idx_LBRC < led_max) rgb_matrix_set_color(led_idx_LBRC, 255, 0, 0);
-        if (led_idx_RBRC != NO_LED && led_idx_RBRC >= led_min && led_idx_RBRC < led_max) rgb_matrix_set_color(led_idx_RBRC, 255, 0, 0);
-        if (led_idx_QUOT != NO_LED && led_idx_QUOT >= led_min && led_idx_QUOT < led_max) rgb_matrix_set_color(led_idx_QUOT, 255, 0, 0);
-        if (led_idx_NUHS != NO_LED && led_idx_NUHS >= led_min && led_idx_NUHS < led_max) rgb_matrix_set_color(led_idx_NUHS, 255, 0, 0);
-        if (led_idx_SLSH != NO_LED && led_idx_SLSH >= led_min && led_idx_SLSH < led_max) rgb_matrix_set_color(led_idx_SLSH, 255, 0, 0);
+        if (led_idx_MINS != NO_LED) rgb_matrix_set_color(led_idx_MINS, 255, 0, 0);
+        if (led_idx_EQL  != NO_LED) rgb_matrix_set_color(led_idx_EQL,  255, 0, 0);
+        if (led_idx_LBRC != NO_LED) rgb_matrix_set_color(led_idx_LBRC, 255, 0, 0);
+        if (led_idx_RBRC != NO_LED) rgb_matrix_set_color(led_idx_RBRC, 255, 0, 0);
+        if (led_idx_QUOT != NO_LED) rgb_matrix_set_color(led_idx_QUOT, 255, 0, 0);
+        if (led_idx_NUHS != NO_LED) rgb_matrix_set_color(led_idx_NUHS, 255, 0, 0);
+        if (led_idx_SLSH != NO_LED) rgb_matrix_set_color(led_idx_SLSH, 255, 0, 0);
     }
 
-    /* Caps Lock on = red, independent of layer/effect */
+    // Caps Lock red, regardless of layer/effect
     if (host_keyboard_led_state().caps_lock && led_idx_CAPS != NO_LED) {
         rgb_matrix_set_color(led_idx_CAPS, 255, 0, 0);
     }
