@@ -41,7 +41,7 @@ jobs:
         with:
           name: q3_he_my_led_fn
           path: |
-            ./.build/**/*.bin
-            ./.build/**/*.hex
-            ./.build/**/*.dfu
-            ./.build/**/*.uf2
+            ./.build/*.bin
+            ./.build/*.hex
+            ./.build/*.dfu
+            ./.build/*.uf2
