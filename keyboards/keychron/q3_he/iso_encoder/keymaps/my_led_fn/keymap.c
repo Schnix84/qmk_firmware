@@ -69,7 +69,7 @@ void keyboard_post_init_user(void) {
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     // WIN_FN-Layer active - mark specific keys in red
     if (layer_state_is(WIN_FN)) {
-        rgb_matrix_set_color_all(0, 0, 0);
+        // rgb_matrix_set_color_all(0, 0, 0);
         if (led_idx_MINS != NO_LED) rgb_matrix_set_color(led_idx_MINS, 255, 0, 0);
         if (led_idx_EQL  != NO_LED) rgb_matrix_set_color(led_idx_EQL,  255, 0, 0);
         if (led_idx_LBRC != NO_LED) rgb_matrix_set_color(led_idx_LBRC, 255, 0, 0);
