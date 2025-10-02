@@ -30,9 +30,8 @@ enum layers {
 
 #ifdef RGB_MATRIX_ENABLE
 #    include "rgb_matrix.h"
-#    include "host.h"
 
-/* LED-Index-Cache */
+/* LED index cache for target keys (DE-ISO positions) */
 static uint8_t led_idx_MINS = NO_LED; // ß
 static uint8_t led_idx_EQL  = NO_LED; // ´
 static uint8_t led_idx_LBRC = NO_LED; // Ü
@@ -42,48 +41,55 @@ static uint8_t led_idx_NUHS = NO_LED; // #
 static uint8_t led_idx_SLSH = NO_LED; // -
 static uint8_t led_idx_CAPS = NO_LED; // Caps Lock
 
+/* Map helper: record first-found LED index for a given keycode */
+static inline void map_if_match(uint16_t kc, uint8_t led) {
+    switch (kc) {
+        case KC_MINS: if (led_idx_MINS == NO_LED) led_idx_MINS = led; break;
+        case KC_EQL:  if (led_idx_EQL  == NO_LED) led_idx_EQL  = led; break;
+        case KC_LBRC: if (led_idx_LBRC == NO_LED) led_idx_LBRC = led; break;
+        case KC_RBRC: if (led_idx_RBRC == NO_LED) led_idx_RBRC = led; break;
+        case KC_QUOT: if (led_idx_QUOT == NO_LED) led_idx_QUOT = led; break;
+        case KC_NUHS: if (led_idx_NUHS == NO_LED) led_idx_NUHS = led; break;
+        case KC_SLSH: if (led_idx_SLSH == NO_LED) led_idx_SLSH = led; break;
+        case KC_CAPS: if (led_idx_CAPS == NO_LED) led_idx_CAPS = led; break;
+    }
+}
+
 void keyboard_post_init_user(void) {
-    // Find LED indices of the target keys by inspecting WIN_BASE-layer
+    /* Scan both base layers to be layout-agnostic */
+    const uint8_t layers_to_scan[] = { WIN_BASE, MAC_BASE };
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             uint8_t led = g_led_config.matrix_co[row][col];
             if (led == NO_LED) continue;
 
             keypos_t kp = (keypos_t){ .row = row, .col = col };
-            uint16_t kc = keymap_key_to_keycode(WIN_BASE, kp);
-
-            switch (kc) {
-                case KC_MINS: led_idx_MINS = led; break;
-                case KC_EQL:  led_idx_EQL  = led; break;
-                case KC_LBRC: led_idx_LBRC = led; break;
-                case KC_RBRC: led_idx_RBRC = led; break;
-                case KC_QUOT: led_idx_QUOT = led; break;
-                case KC_NUHS: led_idx_NUHS = led; break;
-                case KC_SLSH: led_idx_SLSH = led; break;
-                case KC_CAPS: led_idx_CAPS = led; break;
+            for (uint8_t i = 0; i < sizeof(layers_to_scan); i++) {
+                uint16_t kc = keymap_key_to_keycode(layers_to_scan[i], kp);
+                map_if_match(kc, led);
             }
         }
     }
 }
 
+/* Overlay indicators: add highlights without clearing the base effect */
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-    // WIN_FN-Layer active - mark specific keys in red
-    if (layer_state_is(WIN_FN)) {
-        // rgb_matrix_set_color_all(0, 0, 0);
-        if (led_idx_MINS != NO_LED) rgb_matrix_set_color(led_idx_MINS, 255, 0, 0);
-        if (led_idx_EQL  != NO_LED) rgb_matrix_set_color(led_idx_EQL,  255, 0, 0);
-        if (led_idx_LBRC != NO_LED) rgb_matrix_set_color(led_idx_LBRC, 255, 0, 0);
-        if (led_idx_RBRC != NO_LED) rgb_matrix_set_color(led_idx_RBRC, 255, 0, 0);
-        if (led_idx_QUOT != NO_LED) rgb_matrix_set_color(led_idx_QUOT, 255, 0, 0);
-        if (led_idx_NUHS != NO_LED) rgb_matrix_set_color(led_idx_NUHS, 255, 0, 0);
-        if (led_idx_SLSH != NO_LED) rgb_matrix_set_color(led_idx_SLSH, 255, 0, 0);
+    /* Highlight bracket/pipe keys when any FN layer is held */
+    if (layer_state_is(MAC_FN) || layer_state_is(WIN_FN)) {
+        if (led_idx_MINS != NO_LED && led_idx_MINS >= led_min && led_idx_MINS < led_max) rgb_matrix_set_color(led_idx_MINS, 255, 0, 0);
+        if (led_idx_EQL  != NO_LED && led_idx_EQL  >= led_min && led_idx_EQL  < led_max) rgb_matrix_set_color(led_idx_EQL,  255, 0, 0);
+        if (led_idx_LBRC != NO_LED && led_idx_LBRC >= led_min && led_idx_LBRC < led_max) rgb_matrix_set_color(led_idx_LBRC, 255, 0, 0);
+        if (led_idx_RBRC != NO_LED && led_idx_RBRC >= led_min && led_idx_RBRC < led_max) rgb_matrix_set_color(led_idx_RBRC, 255, 0, 0);
+        if (led_idx_QUOT != NO_LED && led_idx_QUOT >= led_min && led_idx_QUOT < led_max) rgb_matrix_set_color(led_idx_QUOT, 255, 0, 0);
+        if (led_idx_NUHS != NO_LED && led_idx_NUHS >= led_min && led_idx_NUHS < led_max) rgb_matrix_set_color(led_idx_NUHS, 255, 0, 0);
+        if (led_idx_SLSH != NO_LED && led_idx_SLSH >= led_min && led_idx_SLSH < led_max) rgb_matrix_set_color(led_idx_SLSH, 255, 0, 0);
     }
 
-    // Caps Lock on - mark Caps Lock key in red
+    /* Caps Lock on = red, independent of layer/effect */
     if (host_keyboard_led_state().caps_lock && led_idx_CAPS != NO_LED) {
         rgb_matrix_set_color(led_idx_CAPS, 255, 0, 0);
     }
-
     return true;
 }
 #endif /* RGB_MATRIX_ENABLE */
@@ -91,6 +97,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 #define FN_MAC MO(MAC_FN)
 #define FN_WIN MO(WIN_FN)
 
+/* Keymap (unchanged behavior, DE-ISO positions) */
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  [MAC_BASE] = LAYOUT_iso_88(
@@ -124,10 +131,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,  _______,  _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,            _______,             _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,   _______,  _______,  _______),
-
 };
-
 // clang-format on
+
 #if defined(ENCODER_MAP_ENABLE)
 const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
     [MAC_BASE] = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
@@ -138,7 +144,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 #endif // ENCODER_MAP_ENABLE
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // Keychron-Common
+    /* Keychron common handling */
     if (!process_record_keychron_common(keycode, record)) {
         return false;
     }
@@ -146,7 +152,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    // Mic mute/unmute: Win+Alt+K
+    /* Mic mute/unmute: Win+Alt+K */
     if (keycode == MIC_MUTE_TGL) {
         register_mods(MOD_LGUI | MOD_LALT);
         tap_code(KC_K);
@@ -154,21 +160,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
-    // Brackets only when WIN_FN-layer active
-    if (!layer_state_is(WIN_FN)) {
+    /* Only transform when FN layer is active */
+    if (!layer_state_is(MAC_FN) && !layer_state_is(WIN_FN)) {
         return true;
     }
 
-    // Fn + ß / ´ / Ü / + / Ä / # → ( ) [ ] { }
-    // DE-ISO position-keycodes: ß=KC_MINS, ´=KC_EQL, Ü=KC_LBRC, +=KC_RBRC, Ä=KC_QUOT, #=KC_NUHS, -=KC_SLSH
+    /* Fn + ß/´/Ü/+ /Ä/#/- → ( ) { } [ ] |   (DE-ISO positions) */
     switch (keycode) {
-        case KC_MINS: tap_code16(S(KC_8));    return false; // ß → (
-        case KC_EQL:  tap_code16(S(KC_9));    return false; // ´ → )
-        case KC_LBRC: tap_code16(RALT(KC_7)); return false; // Ü → {
-        case KC_RBRC: tap_code16(RALT(KC_0)); return false; // + → }
-        case KC_QUOT: tap_code16(RALT(KC_8)); return false; // Ä → [
-        case KC_NUHS: tap_code16(RALT(KC_9)); return false; // # → ]
-        case KC_SLSH: tap_code16(RALT(KC_NUBS)); return false; // - → |
+        case KC_MINS: tap_code16(S(KC_8));          return false; // ß → (
+        case KC_EQL:  tap_code16(S(KC_9));          return false; // ´ → )
+        case KC_LBRC: tap_code16(RALT(KC_7));       return false; // Ü → {
+        case KC_RBRC: tap_code16(RALT(KC_0));       return false; // + → }
+        case KC_QUOT: tap_code16(RALT(KC_8));       return false; // Ä → [
+        case KC_NUHS: tap_code16(RALT(KC_9));       return false; // # → ]
+        case KC_SLSH: tap_code16(RALT(KC_NUBS));    return false; // - → |
     }
 
     return true;
