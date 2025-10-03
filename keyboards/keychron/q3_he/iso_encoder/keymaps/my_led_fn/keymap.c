@@ -31,7 +31,7 @@ enum layers {
 #ifdef RGB_MATRIX_ENABLE
 #    include "rgb_matrix.h"
 
-/* LED index cache for target keys (DE-ISO positions) */
+// LED index cache for target keys (DE-ISO positions)
 static uint8_t led_idx_MINS = NO_LED; // ß
 static uint8_t led_idx_EQL  = NO_LED; // ´
 static uint8_t led_idx_LBRC = NO_LED; // Ü
@@ -41,7 +41,7 @@ static uint8_t led_idx_NUHS = NO_LED; // #
 static uint8_t led_idx_SLSH = NO_LED; // -
 static uint8_t led_idx_CAPS = NO_LED; // Caps Lock
 
-/* Map helper: record first-found LED index for a given keycode */
+// Map helper: record first-found LED index for a given keycode
 static inline void map_if_match(uint16_t kc, uint8_t led) {
     switch (kc) {
         case KC_MINS: if (led_idx_MINS == NO_LED) led_idx_MINS = led; break;
@@ -56,7 +56,7 @@ static inline void map_if_match(uint16_t kc, uint8_t led) {
 }
 
 void keyboard_post_init_user(void) {
-    /* Scan both base layers to be layout-agnostic */
+    // Scan both base layers to be layout-agnostic
     const uint8_t layers_to_scan[] = { WIN_BASE, MAC_BASE };
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
@@ -73,30 +73,82 @@ void keyboard_post_init_user(void) {
     }
 }
 
+// Helper: restore a key's base color for known static modes.
+static inline void set_base_color(uint8_t led_idx, uint8_t mode) {
+    if (led_idx == NO_LED) return;
+    switch (mode) {
+        case RGB_MATRIX_CUSTOM_ALL_BLACK:
+            rgb_matrix_set_color(led_idx, 0, 0, 0);
+            break;
+        case RGB_MATRIX_CUSTOM_ALL_WHITE:
+            rgb_matrix_set_color(led_idx, 255, 255, 255);
+            break;
+        default:
+            // Dynamic effects: don't restore here; they'll repaint next frame.
+            break;
+    }
+}
+
+// Helper: overlay color depending on current mode.
+static inline void get_overlay_color(uint8_t mode, uint8_t *r, uint8_t *g, uint8_t *b) {
+    if (mode == RGB_MATRIX_CUSTOM_ALL_WHITE) {
+        *r = 255; *g = 0;   *b = 0;   // red in ALL_WHITE
+    } else {
+        *r = 255; *g = 255; *b = 255; // white in all other modes
+    }
+}
+
+// Apply Caps Lock and FN overlay indicators with mode-dependent colors
 bool rgb_matrix_indicators_user(void) {
-    // FN overlay for brackets/pipe – always paint over the base effect
-    if (layer_state_is(MAC_FN) || layer_state_is(WIN_FN)) {
-        if (led_idx_MINS != NO_LED) rgb_matrix_set_color(led_idx_MINS, 255, 0, 0);
-        if (led_idx_EQL  != NO_LED) rgb_matrix_set_color(led_idx_EQL,  255, 0, 0);
-        if (led_idx_LBRC != NO_LED) rgb_matrix_set_color(led_idx_LBRC, 255, 0, 0);
-        if (led_idx_RBRC != NO_LED) rgb_matrix_set_color(led_idx_RBRC, 255, 0, 0);
-        if (led_idx_QUOT != NO_LED) rgb_matrix_set_color(led_idx_QUOT, 255, 0, 0);
-        if (led_idx_NUHS != NO_LED) rgb_matrix_set_color(led_idx_NUHS, 255, 0, 0);
-        if (led_idx_SLSH != NO_LED) rgb_matrix_set_color(led_idx_SLSH, 255, 0, 0);
+    uint8_t mode      = rgb_matrix_get_mode();
+    led_t   host_leds = host_keyboard_led_state();
+
+    // FN is considered active when either of these layers is on.
+    bool fn_active = layer_state_is(MAC_FN) || layer_state_is(WIN_FN);
+
+    // Compute overlay color once (red in ALL_WHITE, white otherwise).
+    uint8_t or_, og, ob;
+    get_overlay_color(mode, &or_, &og, &ob);
+
+    // FN overlay
+    const uint8_t fn_keys[] = {
+        led_idx_MINS, led_idx_EQL,  led_idx_LBRC, led_idx_RBRC,
+        led_idx_QUOT, led_idx_NUHS, led_idx_SLSH
+    };
+
+    for (uint8_t i = 0; i < (uint8_t)(sizeof(fn_keys) / sizeof(fn_keys[0])); i++) {
+        uint8_t idx = fn_keys[i];
+        if (idx == NO_LED) continue;
+
+        if (fn_active) {
+            // FN active → paint overlay color (red in ALL_WHITE, white otherwise)
+            rgb_matrix_set_color(idx, or_, og, ob);
+        } else {
+            // FN inactive → restore base color for static modes
+            set_base_color(idx, mode);
+        }
     }
 
-    // Caps Lock red, regardless of layer/effect
-    if (host_keyboard_led_state().caps_lock && led_idx_CAPS != NO_LED) {
-        rgb_matrix_set_color(led_idx_CAPS, 255, 0, 0);
+    // Caps Lock indicator
+    if (led_idx_CAPS != NO_LED) {
+        if (host_leds.caps_lock) {
+            // Caps ON → overlay color (red in ALL_WHITE, white otherwise)
+            rgb_matrix_set_color(led_idx_CAPS, or_, og, ob);
+        } else {
+            // Caps OFF → restore base color for static modes
+            set_base_color(led_idx_CAPS, mode);
+        }
     }
+
     return true;
 }
-#endif /* RGB_MATRIX_ENABLE */
+
+#endif // RGB_MATRIX_ENABLE
 
 #define FN_MAC MO(MAC_FN)
 #define FN_WIN MO(WIN_FN)
 
-/* Keymap (unchanged behavior, DE-ISO positions) */
+// Keymap (unchanged behavior, DE-ISO positions)
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  [MAC_BASE] = LAYOUT_iso_88(
