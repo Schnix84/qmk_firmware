@@ -17,9 +17,7 @@
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
 
-enum custom_keycodes {
-    MIC_MUTE_TGL = SAFE_RANGE
-};
+enum custom_keycodes { MIC_MUTE_TGL = SAFE_RANGE };
 
 enum layers {
     MAC_BASE,
@@ -44,27 +42,43 @@ static uint8_t led_idx_CAPS = NO_LED; // Caps Lock
 // Map helper: record first-found LED index for a given keycode
 static inline void map_if_match(uint16_t kc, uint8_t led) {
     switch (kc) {
-        case KC_MINS: if (led_idx_MINS == NO_LED) led_idx_MINS = led; break;
-        case KC_EQL:  if (led_idx_EQL  == NO_LED) led_idx_EQL  = led; break;
-        case KC_LBRC: if (led_idx_LBRC == NO_LED) led_idx_LBRC = led; break;
-        case KC_RBRC: if (led_idx_RBRC == NO_LED) led_idx_RBRC = led; break;
-        case KC_QUOT: if (led_idx_QUOT == NO_LED) led_idx_QUOT = led; break;
-        case KC_NUHS: if (led_idx_NUHS == NO_LED) led_idx_NUHS = led; break;
-        case KC_SLSH: if (led_idx_SLSH == NO_LED) led_idx_SLSH = led; break;
-        case KC_CAPS: if (led_idx_CAPS == NO_LED) led_idx_CAPS = led; break;
+        case KC_MINS:
+            if (led_idx_MINS == NO_LED) led_idx_MINS = led;
+            break;
+        case KC_EQL:
+            if (led_idx_EQL == NO_LED) led_idx_EQL = led;
+            break;
+        case KC_LBRC:
+            if (led_idx_LBRC == NO_LED) led_idx_LBRC = led;
+            break;
+        case KC_RBRC:
+            if (led_idx_RBRC == NO_LED) led_idx_RBRC = led;
+            break;
+        case KC_QUOT:
+            if (led_idx_QUOT == NO_LED) led_idx_QUOT = led;
+            break;
+        case KC_NUHS:
+            if (led_idx_NUHS == NO_LED) led_idx_NUHS = led;
+            break;
+        case KC_SLSH:
+            if (led_idx_SLSH == NO_LED) led_idx_SLSH = led;
+            break;
+        case KC_CAPS:
+            if (led_idx_CAPS == NO_LED) led_idx_CAPS = led;
+            break;
     }
 }
 
 void keyboard_post_init_user(void) {
     // Scan both base layers to be layout-agnostic
-    const uint8_t layers_to_scan[] = { WIN_BASE, MAC_BASE };
+    const uint8_t layers_to_scan[] = {WIN_BASE, MAC_BASE};
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             uint8_t led = g_led_config.matrix_co[row][col];
             if (led == NO_LED) continue;
 
-            keypos_t kp = (keypos_t){ .row = row, .col = col };
+            keypos_t kp = (keypos_t){.row = row, .col = col};
             for (uint8_t i = 0; i < sizeof(layers_to_scan); i++) {
                 uint16_t kc = keymap_key_to_keycode(layers_to_scan[i], kp);
                 map_if_match(kc, led);
@@ -92,9 +106,13 @@ static inline void set_base_color(uint8_t led_idx, uint8_t mode) {
 // Helper: overlay color depending on current mode.
 static inline void get_overlay_color(uint8_t mode, uint8_t *r, uint8_t *g, uint8_t *b) {
     if (mode == RGB_MATRIX_CUSTOM_ALL_WHITE) {
-        *r = 255; *g = 0;   *b = 0;   // red in ALL_WHITE
+        *r = 255;
+        *g = 0;
+        *b = 0; // red in ALL_WHITE
     } else {
-        *r = 255; *g = 255; *b = 255; // white in all other modes
+        *r = 255;
+        *g = 255;
+        *b = 255; // white in all other modes
     }
 }
 
@@ -111,10 +129,7 @@ bool rgb_matrix_indicators_user(void) {
     get_overlay_color(mode, &or_, &og, &ob);
 
     // FN overlay
-    const uint8_t fn_keys[] = {
-        led_idx_MINS, led_idx_EQL,  led_idx_LBRC, led_idx_RBRC,
-        led_idx_QUOT, led_idx_NUHS, led_idx_SLSH
-    };
+    const uint8_t fn_keys[] = {led_idx_MINS, led_idx_EQL, led_idx_LBRC, led_idx_RBRC, led_idx_QUOT, led_idx_NUHS, led_idx_SLSH};
 
     for (uint8_t i = 0; i < (uint8_t)(sizeof(fn_keys) / sizeof(fn_keys[0])); i++) {
         uint8_t idx = fn_keys[i];
@@ -218,13 +233,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     /* Fn + ß/´/Ü/+ /Ä/#/- → ( ) { } [ ] |   (DE-ISO positions) */
     switch (keycode) {
-        case KC_MINS: tap_code16(S(KC_8));          return false; // ß → (
-        case KC_EQL:  tap_code16(S(KC_9));          return false; // ´ → )
-        case KC_LBRC: tap_code16(RALT(KC_7));       return false; // Ü → {
-        case KC_RBRC: tap_code16(RALT(KC_0));       return false; // + → }
-        case KC_QUOT: tap_code16(RALT(KC_8));       return false; // Ä → [
-        case KC_NUHS: tap_code16(RALT(KC_9));       return false; // # → ]
-        case KC_SLSH: tap_code16(RALT(KC_NUBS));    return false; // - → |
+        case KC_MINS:
+            tap_code16(S(KC_8));
+            return false; // ß → (
+        case KC_EQL:
+            tap_code16(S(KC_9));
+            return false; // ´ → )
+        case KC_LBRC:
+            tap_code16(RALT(KC_7));
+            return false; // Ü → {
+        case KC_RBRC:
+            tap_code16(RALT(KC_0));
+            return false; // + → }
+        case KC_QUOT:
+            tap_code16(RALT(KC_8));
+            return false; // Ä → [
+        case KC_NUHS:
+            tap_code16(RALT(KC_9));
+            return false; // # → ]
+        case KC_SLSH:
+            tap_code16(RALT(KC_NUBS));
+            return false; // - → |
     }
 
     return true;
