@@ -17,7 +17,29 @@
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
 
-enum custom_keycodes { MIC_MUTE_TGL = SAFE_RANGE };
+// Parentheses (same on both OS)
+#define KC_PAR_L S(KC_8) // (
+#define KC_PAR_R S(KC_9) // )
+
+// macOS (German - Apple layout)
+#define KC_M_SL LALT(KC_5) // [
+#define KC_M_SR LALT(KC_6) // ]
+#define KC_M_CL LALT(KC_8) // {
+#define KC_M_CR LALT(KC_9) // }
+#define KC_M_PI LALT(KC_7) // |
+
+// Windows (German layout):
+#define KC_W_SL RALT(KC_8)    // [
+#define KC_W_SR RALT(KC_9)    // ]
+#define KC_W_CL RALT(KC_7)    // {
+#define KC_W_CR RALT(KC_0)    // }
+#define KC_W_PI RALT(KC_NUBS) // |
+
+// English comments: make Home/End behave as macOS/iPadOS shortcuts
+#define KC_LHOME LGUI(KC_LEFT) // ⌘ + ←
+#define KC_LEND LGUI(KC_RIGHT) // ⌘ + →
+
+enum custom_keycodes { KC_MMUTE = SAFE_RANGE };
 
 enum layers {
     MAC_BASE,
@@ -71,16 +93,17 @@ static inline void map_if_match(uint16_t kc, uint8_t led) {
 
 void keyboard_post_init_user(void) {
     // Scan both base layers to be layout-agnostic
-    const uint8_t layers_to_scan[] = {WIN_BASE, MAC_BASE};
+    static const uint8_t layers_to_scan[] = { WIN_BASE, MAC_BASE };
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            uint8_t led = g_led_config.matrix_co[row][col];
+            const uint8_t led = g_led_config.matrix_co[row][col];
             if (led == NO_LED) continue;
 
-            keypos_t kp = (keypos_t){.row = row, .col = col};
-            for (uint8_t i = 0; i < sizeof(layers_to_scan); i++) {
-                uint16_t kc = keymap_key_to_keycode(layers_to_scan[i], kp);
+            const keypos_t kp = (keypos_t){ .row = row, .col = col };
+            for (size_t i = 0; i < ARRAY_SIZE(layers_to_scan); i++) {
+                const uint8_t layer = layers_to_scan[i];
+                const uint16_t kc   = keymap_key_to_keycode(layer, kp);
                 map_if_match(kc, led);
             }
         }
@@ -131,16 +154,14 @@ bool rgb_matrix_indicators_user(void) {
     // FN overlay
     const uint8_t fn_keys[] = {led_idx_MINS, led_idx_EQL, led_idx_LBRC, led_idx_RBRC, led_idx_QUOT, led_idx_NUHS, led_idx_SLSH};
 
-    for (uint8_t i = 0; i < (uint8_t)(sizeof(fn_keys) / sizeof(fn_keys[0])); i++) {
-        uint8_t idx = fn_keys[i];
+    for (size_t i = 0; i < ARRAY_SIZE(fn_keys); i++) {
+        const uint8_t idx = fn_keys[i];
         if (idx == NO_LED) continue;
 
         if (fn_active) {
-            // FN active → paint overlay color (red in ALL_WHITE, white otherwise)
             rgb_matrix_set_color(idx, or_, og, ob);
         } else {
-            // FN inactive → restore base color for static modes
-            set_base_color(idx, mode);
+            set_base_color(idx, mode); // Only restores for known static modes.
         }
     }
 
@@ -166,24 +187,24 @@ bool rgb_matrix_indicators_user(void) {
 // Keymap (unchanged behavior, DE-ISO positions)
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
- [MAC_BASE] = LAYOUT_iso_88(
+    [MAC_BASE] = LAYOUT_iso_88(
         KC_ESC,   KC_BRID,  KC_BRIU,  KC_MCTRL, KC_LNPAD, RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  KC_MUTE,   KC_SNAP,  KC_SIRI,  RGB_MOD,
-        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,   KC_BSPC,   KC_INS,   KC_HOME,  KC_PGUP,
-        KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,             KC_DEL,   KC_END,   KC_PGDN,
+        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,   KC_BSPC,   KC_INS,   KC_LHOME,  KC_PGUP,
+        KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,             KC_DEL,   KC_LEND,   KC_PGDN,
         KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,  KC_NUHS,  KC_ENT,
         KC_LSFT,  KC_NUBS,  KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,            KC_RSFT,             KC_UP,
         KC_LCTL,  KC_LOPTN, KC_LCMMD,                               KC_SPC,                                 KC_RCMMD, KC_ROPTN, FN_MAC,   KC_RCTL,   KC_LEFT,  KC_DOWN,  KC_RGHT),
 
     [MAC_FN] = LAYOUT_iso_88(
         _______,  KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   RGB_TOG,   _______,  _______,  RGB_TOG,
-        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
-        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,             _______,  _______,  _______,
-        _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
-        _______,  _______,  _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,            _______,             _______,
+        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  KC_PAR_L, KC_PAR_R, _______,   _______,  _______,  _______,
+        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  KC_M_SL,  KC_M_SR,             _______,  _______,  _______,
+        _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  KC_M_CL,  KC_M_CR,  _______,
+        _______,  _______,  _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  KC_M_PI,            _______,             _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,   _______,  _______,  _______),
 
-    [WIN_BASE] = LAYOUT_iso_88(
-        KC_ESC,   KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   KC_MUTE,   KC_PSCR,  MIC_MUTE_TGL, RGB_MOD,
+    [WIN_BASE] = LAYOUT_iso_88( 
+        KC_ESC,   KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   KC_MUTE,   KC_PSCR,  KC_MMUTE, RGB_MOD,
         KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,   KC_BSPC,   KC_INS,   KC_HOME,  KC_PGUP,
         KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,             KC_DEL,   KC_END,   KC_PGDN,
         KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,  KC_NUHS,  KC_ENT,
@@ -192,10 +213,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [WIN_FN] = LAYOUT_iso_88(
         _______,  KC_BRID,  KC_BRIU,  KC_TASK,  KC_FILE,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  RGB_TOG,   _______,  _______,  RGB_TOG,
-        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
-        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,             _______,  _______,  _______,
-        _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
-        _______,  _______,  _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,            _______,             _______,
+        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  KC_PAR_L, KC_PAR_R, _______,   _______,  KC_LHOME, _______,
+        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  KC_W_SL,  KC_W_SR,             _______,  KC_LEND,  _______,
+        _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  KC_W_CL,  KC_W_CR,  _______,
+        _______,  _______,  _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  KC_W_PI,            _______,             _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,   _______,  _______,  _______),
 };
 // clang-format on
@@ -214,46 +235,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_keychron_common(keycode, record)) {
         return false;
     }
+
     if (!record->event.pressed) {
         return true;
     }
 
-    /* Mic mute/unmute: Win+Alt+K */
-    if (keycode == MIC_MUTE_TGL) {
-        register_mods(MOD_LGUI | MOD_LALT);
-        tap_code(KC_K);
-        unregister_mods(MOD_LGUI | MOD_LALT);
-        return false;
-    }
-
-    /* Only transform when FN layer is active */
-    if (!layer_state_is(MAC_FN) && !layer_state_is(WIN_FN)) {
-        return true;
-    }
-
-    /* Fn + ß/´/Ü/+ /Ä/#/- → ( ) { } [ ] |   (DE-ISO positions) */
     switch (keycode) {
-        case KC_MINS:
-            tap_code16(S(KC_8));
-            return false; // ß → (
-        case KC_EQL:
-            tap_code16(S(KC_9));
-            return false; // ´ → )
-        case KC_LBRC:
-            tap_code16(RALT(KC_7));
-            return false; // Ü → {
-        case KC_RBRC:
-            tap_code16(RALT(KC_0));
-            return false; // + → }
-        case KC_QUOT:
-            tap_code16(RALT(KC_8));
-            return false; // Ä → [
-        case KC_NUHS:
-            tap_code16(RALT(KC_9));
-            return false; // # → ]
-        case KC_SLSH:
-            tap_code16(RALT(KC_NUBS));
-            return false; // - → |
+        case KC_MMUTE:
+            // Toggle mic mute (Win+Alt+K)
+            tap_code16(LGUI(LALT(KC_K)));
+            return false;
     }
 
     return true;
