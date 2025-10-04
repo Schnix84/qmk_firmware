@@ -243,9 +243,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_SIRI:
             if (record->event.pressed) {
-                // Trigger Siri (voice) via Full Keyboard Access shortcut:
-                // Siri is bound to Ctrl+Alt+Shift+S in iOS.
-                tap_code16(LCTL(LALT(LSFT(KC_S))));
+                // Siri/Spotlight search: emit Alt+Space
+                // (OS swaps Option <-> Command → becomes Cmd+Space)
+                tap_code16(LALT(KC_SPACE));
             }
             return false;
 
