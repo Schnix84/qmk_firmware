@@ -28,16 +28,18 @@
 #define KC_M_CR LALT(KC_9) // }
 #define KC_M_PI LALT(KC_7) // |
 
-// Windows (German layout):
+// Windows (German layout)
 #define KC_W_SL RALT(KC_8)    // [
 #define KC_W_SR RALT(KC_9)    // ]
 #define KC_W_CL RALT(KC_7)    // {
 #define KC_W_CR RALT(KC_0)    // }
 #define KC_W_PI RALT(KC_NUBS) // |
 
-// English comments: make Home/End behave as macOS/iPadOS shortcuts
-#define KC_LHOME LGUI(KC_LEFT) // ⌘ + ←
-#define KC_LEND LGUI(KC_RIGHT) // ⌘ + →
+// Home/End = move to the start/end of the line
+// iPadOS/macOS remap Option <-> Command
+// Result: Alt = Command, Win = Option
+#define KC_LHOME LALT(KC_LEFT) // Sends Alt+Left  → via OS remap: Cmd+Left (go to line start)
+#define KC_LEND LALT(KC_RIGHT) // Sends Alt+Right → via OS remap: Cmd+Right (go to line end)
 
 enum custom_keycodes { KC_MMUTE = SAFE_RANGE };
 
@@ -93,24 +95,24 @@ static inline void map_if_match(uint16_t kc, uint8_t led) {
 
 void keyboard_post_init_user(void) {
     // Scan both base layers to be layout-agnostic
-    static const uint8_t layers_to_scan[] = { WIN_BASE, MAC_BASE };
+    static const uint8_t layers_to_scan[] = {WIN_BASE, MAC_BASE};
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             const uint8_t led = g_led_config.matrix_co[row][col];
             if (led == NO_LED) continue;
 
-            const keypos_t kp = (keypos_t){ .row = row, .col = col };
+            const keypos_t kp = (keypos_t){.row = row, .col = col};
             for (size_t i = 0; i < ARRAY_SIZE(layers_to_scan); i++) {
-                const uint8_t layer = layers_to_scan[i];
-                const uint16_t kc   = keymap_key_to_keycode(layer, kp);
+                const uint8_t  layer = layers_to_scan[i];
+                const uint16_t kc    = keymap_key_to_keycode(layer, kp);
                 map_if_match(kc, led);
             }
         }
     }
 }
 
-// Helper: restore a key's base color for known static modes.
+// Helper: restore a key's base color for known static modes
 static inline void set_base_color(uint8_t led_idx, uint8_t mode) {
     if (led_idx == NO_LED) return;
     switch (mode) {
@@ -121,12 +123,12 @@ static inline void set_base_color(uint8_t led_idx, uint8_t mode) {
             rgb_matrix_set_color(led_idx, 255, 255, 255);
             break;
         default:
-            // Dynamic effects: don't restore here; they'll repaint next frame.
+            // Dynamic effects: don't restore here; they'll repaint next frame
             break;
     }
 }
 
-// Helper: overlay color depending on current mode.
+// Helper: overlay color depending on current mode
 static inline void get_overlay_color(uint8_t mode, uint8_t *r, uint8_t *g, uint8_t *b) {
     if (mode == RGB_MATRIX_CUSTOM_ALL_WHITE) {
         *r = 255;
@@ -147,7 +149,7 @@ bool rgb_matrix_indicators_user(void) {
     // FN is considered active when either of these layers is on.
     bool fn_active = layer_state_is(MAC_FN) || layer_state_is(WIN_FN);
 
-    // Compute overlay color once (red in ALL_WHITE, white otherwise).
+    // Compute overlay color once (red in ALL_WHITE, white otherwise)
     uint8_t or_, og, ob;
     get_overlay_color(mode, &or_, &og, &ob);
 
@@ -161,7 +163,7 @@ bool rgb_matrix_indicators_user(void) {
         if (fn_active) {
             rgb_matrix_set_color(idx, or_, og, ob);
         } else {
-            set_base_color(idx, mode); // Only restores for known static modes.
+            set_base_color(idx, mode); // Only restores for known static modes
         }
     }
 
@@ -231,20 +233,35 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 #endif // ENCODER_MAP_ENABLE
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case KC_MMUTE:
+            if (record->event.pressed) {
+                // Mic mute: emit Win+Alt+K
+                tap_code16(LGUI(LALT(KC_K)));
+            }
+            return false;
+
+        case KC_SIRI:
+            if (record->event.pressed) {
+                // Siri/Spotlight: emit Alt+Space.
+                // OS swaps Option <-> Command, so this becomes Cmd+Space.
+                tap_code16(LALT(KC_SPACE));
+            }
+            return false;
+
+        case KC_SNAP:
+            if (record->event.pressed) {
+                // Screenshot (toolbar): emit Shift+Alt+4.
+                // With OS swap, this becomes Shift+Cmd+4.
+                // For fullscreen change KC_4 -> KC_3.
+                tap_code16(LSFT(LALT(KC_4)));
+            }
+            return false;
+    }
+
     /* Keychron common handling */
     if (!process_record_keychron_common(keycode, record)) {
         return false;
-    }
-
-    if (!record->event.pressed) {
-        return true;
-    }
-
-    switch (keycode) {
-        case KC_MMUTE:
-            // Toggle mic mute (Win+Alt+K)
-            tap_code16(LGUI(LALT(KC_K)));
-            return false;
     }
 
     return true;
