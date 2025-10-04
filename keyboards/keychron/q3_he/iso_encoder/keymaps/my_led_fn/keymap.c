@@ -1,4 +1,4 @@
-/* Copyright 2024 @ Keychron (https://www.keychron.com)
+ /* Copyright 2024 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,10 +36,8 @@
 #define KC_W_PI RALT(KC_NUBS) // |
 
 // Home/End = move to the start/end of the line
-// iOS/macOS remap Option <-> Command
-// Result: Alt = Command, Win = Option
-#define KC_LHOME LALT(KC_LEFT) // Sends Alt+Left  → via OS remap: Cmd+Left (go to line start)
-#define KC_LEND LALT(KC_RIGHT) // Sends Alt+Right → via OS remap: Cmd+Right (go to line end)
+#define KC_LHOME LGUI(KC_LEFT) // Cmd+Left (go to line start)
+#define KC_LEND LGUI(KC_RIGHT) // Cmd+Right (go to line end)
 
 enum custom_keycodes { KC_MMUTE = SAFE_RANGE };
 
@@ -195,7 +193,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,             KC_DEL,   KC_LEND,   KC_PGDN,
         KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,  KC_NUHS,  KC_ENT,
         KC_LSFT,  KC_NUBS,  KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,            KC_RSFT,             KC_UP,
-        KC_LCTL,  KC_LOPTN, KC_LCMMD,                               KC_SPC,                                 KC_RCMMD, KC_ROPTN, FN_MAC,   KC_RCTL,   KC_LEFT,  KC_DOWN,  KC_RGHT),
+        KC_LCTL,  KC_LCMMD, KC_LOPTN,                               KC_SPC,                                 KC_ROPTN, KC_RCMMD, FN_MAC,   KC_RCTL,   KC_LEFT,  KC_DOWN,  KC_RGHT),
 
     [MAC_FN] = LAYOUT_iso_88(
         _______,  KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   RGB_TOG,   _______,  _______,  RGB_TOG,
@@ -215,8 +213,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [WIN_FN] = LAYOUT_iso_88(
         _______,  KC_BRID,  KC_BRIU,  KC_TASK,  KC_FILE,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  RGB_TOG,   _______,  _______,  RGB_TOG,
-        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  KC_PAR_L, KC_PAR_R, _______,   _______,  KC_LHOME, _______,
-        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  KC_W_SL,  KC_W_SR,             _______,  KC_LEND,  _______,
+        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  KC_PAR_L, KC_PAR_R, _______,   _______,  _______, _______,
+        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  KC_W_SL,  KC_W_SR,             _______,  _______,  _______,
         _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  KC_W_CL,  KC_W_CR,  _______,
         _______,  _______,  _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  KC_W_PI,            _______,             _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,   _______,  _______,  _______),
@@ -238,23 +236,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 // Mic mute: emit Win+Alt+K
                 tap_code16(LGUI(LALT(KC_K)));
-            }
-            return false;
-
-        case KC_SIRI:
-            if (record->event.pressed) {
-                // Siri/Spotlight search: emit Alt+Space
-                // (OS swaps Option <-> Command → becomes Cmd+Space)
-                tap_code16(LALT(KC_SPACE));
-            }
-            return false;
-
-        case KC_SNAP:
-            if (record->event.pressed) {
-                // Screenshot (toolbar): emit Shift+Alt+4.
-                // With OS swap, this becomes Shift+Cmd+4.
-                // For fullscreen change KC_4 -> KC_3.
-                tap_code16(LSFT(LALT(KC_4)));
             }
             return false;
     }
