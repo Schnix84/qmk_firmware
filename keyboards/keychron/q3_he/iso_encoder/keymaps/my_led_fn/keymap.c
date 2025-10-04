@@ -36,7 +36,7 @@
 #define KC_W_PI RALT(KC_NUBS) // |
 
 // Home/End = move to the start/end of the line
-// iPadOS/macOS remap Option <-> Command
+// iOS/macOS remap Option <-> Command
 // Result: Alt = Command, Win = Option
 #define KC_LHOME LALT(KC_LEFT) // Sends Alt+Left  → via OS remap: Cmd+Left (go to line start)
 #define KC_LEND LALT(KC_RIGHT) // Sends Alt+Right → via OS remap: Cmd+Right (go to line end)
@@ -243,9 +243,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_SIRI:
             if (record->event.pressed) {
-                // Siri/Spotlight: emit Alt+Space.
-                // OS swaps Option <-> Command, so this becomes Cmd+Space.
-                tap_code16(LALT(KC_SPACE));
+                // Trigger Siri (voice) via Full Keyboard Access shortcut:
+                // Siri is bound to Ctrl+Alt+Shift+S in iOS.
+                tap_code16(LCTL(LALT(LSFT(KC_S))));
             }
             return false;
 
