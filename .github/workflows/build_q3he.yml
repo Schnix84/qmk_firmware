@@ -22,14 +22,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: qmkfm/qmk_cli:latest
+      image: ghcr.io/qmk/qmk_cli
 
     steps:
+      - name: Disable safe.directory check
+        run: git config --global --add safe.directory '*'
+
       - name: Checkout (full, with submodules)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
+
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
         
       - name: Build firmware (GNU make, only Q3 HE my_led_fn)
         run: |
