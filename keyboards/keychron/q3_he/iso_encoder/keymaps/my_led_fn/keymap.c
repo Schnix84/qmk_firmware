@@ -16,7 +16,6 @@
 
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
-#include "host.h"
 
 // Parentheses (same on both OS)
 #define KC_PAR_L S(KC_8) // (
@@ -205,7 +204,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,   _______,  _______,  _______),
 
     [WIN_BASE] = LAYOUT_iso_88( 
-        KC_ESC,   KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   KC_MUTE,   KC_PSCR,  KC_NO,    RGB_MOD,
+        KC_ESC,   KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   KC_MUTE,   KC_PSCR,  KC_MMUTE, RGB_MOD,
         KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,   KC_BSPC,   KC_INS,   KC_HOME,  KC_PGUP,
         KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,             KC_DEL,   KC_END,   KC_PGDN,
         KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,  KC_NUHS,  KC_ENT,
@@ -232,13 +231,29 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 #endif // ENCODER_MAP_ENABLE
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // The dedicated microphone key is matrix position [0, 14].
-    // Block it by physical position so it stays inert even if VIA/EEPROM
-    // still contains an older dynamic remap for that key.
     if (record->event.key.row == 0 && record->event.key.col == 14) {
-        clear_keyboard();
-        host_consumer_send(0);
-        return false;
+        if (get_highest_layer(default_layer_state) == MAC_BASE) {
+            if (record->event.pressed) {
+                // Reliable external-keyboard path:
+                // macOS can bind Dictation to a custom shortcut, and we send it
+                // directly from the dedicated mic key in Mac mode.
+                register_code(KC_LCTL);
+                register_code(KC_LALT);
+                register_code(KC_LGUI);
+                tap_code(KC_D);
+                unregister_code(KC_LGUI);
+                unregister_code(KC_LALT);
+                unregister_code(KC_LCTL);
+            }
+            return false;
+        }
+        if (get_highest_layer(default_layer_state) == WIN_BASE) {
+            if (record->event.pressed) {
+                // Windows mic mute: emit Win+Alt+K
+                tap_code16(LGUI(LALT(KC_K)));
+            }
+            return false;
+        }
     }
 
     switch (keycode) {
