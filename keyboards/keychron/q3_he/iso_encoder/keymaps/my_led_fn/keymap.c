@@ -16,6 +16,7 @@
 
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
+#include "host.h"
 
 // Parentheses (same on both OS)
 #define KC_PAR_L S(KC_8) // (
@@ -40,6 +41,10 @@
 #define KC_LEND LGUI(KC_RIGHT) // Cmd+Right (go to line end)
 
 enum custom_keycodes { KC_MMUTE = SAFE_RANGE };
+
+// USB HID Consumer Page (0x0C), Usage 0xD8:
+// Start/Stop Voice Dictation Session
+#define AC_VOICE_DICTATION_SESSION 0x00D8
 
 enum layers {
     MAC_BASE,
@@ -233,9 +238,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_SIRI:
-            if (record->event.pressed) {
-                tap_code(KC_F5);
-            }
+            host_consumer_send(record->event.pressed ? AC_VOICE_DICTATION_SESSION : 0);
             return false;
         case KC_MMUTE:
             if (record->event.pressed) {
