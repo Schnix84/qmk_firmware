@@ -232,6 +232,11 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
+        case KC_SIRI:
+            if (record->event.pressed) {
+                tap_code(KC_F5);
+            }
+            return false;
         case KC_MMUTE:
             if (record->event.pressed) {
                 // Mic mute: emit Win+Alt+K
